@@ -1,12 +1,12 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout},
-    style::{Modifier, Style, Stylize},
+    layout::{Alignment, Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
     symbols,
-    widgets::{Block, BorderType, Borders, Paragraph, Row, Table, TableState},
+    widgets::{Block, BorderType, Borders, Paragraph},
     Frame,
 };
 
-use crate::model::Model;
+use crate::model::{Model, Position};
 
 pub fn render(model: &Model, frame: &mut Frame) {
     let mut constraits = vec![Constraint::Percentage(11); 8];
@@ -31,15 +31,11 @@ pub fn render(model: &Model, frame: &mut Frame) {
 
     for i in 0..9 {
         for j in 0..9 {
-            let block = 
-            match (i, j) {
-                (0, 0) => {
-                    Block::new()
-                                .border_set(symbols::border::PLAIN)
-                                .borders(Borders::TOP | Borders::LEFT)
-                                .border_type(BorderType::Thick)
-                        
-                }
+            let block = match (i, j) {
+                (0, 0) => Block::new()
+                    .border_set(symbols::border::PLAIN)
+                    .borders(Borders::TOP | Borders::LEFT)
+                    .border_type(BorderType::Thick),
                 (1 | 2 | 4 | 5 | 7, 0 | 3 | 6) => {
                     let border_set = symbols::border::Set {
                         top_left: symbols::line::THICK_HORIZONTAL,
@@ -194,18 +190,24 @@ pub fn render(model: &Model, frame: &mut Frame) {
                         bottom_left: symbols::line::THICK_HORIZONTAL,
                         ..symbols::border::THICK
                     };
-                    Block::new()
-                        .border_set(border_set)
-                        .borders(Borders::ALL)
+                    Block::new().border_set(border_set).borders(Borders::ALL)
                 }
-                _ => {
-                    Block::new()
-                }
+                _ => Block::new(),
             };
+            let mut style = Style::default();
+            if let Position::Left(x, y) = model.get_position() {
+                if *x == i && *y == j {
+                    style = Style::new()
+                        .fg(Color::Green)
+                        .bg(Color::White)
+                        .add_modifier(Modifier::BOLD)
+                }
+            }
             frame.render_widget(
-                Paragraph::new(model.get(i, j)).block(
-                    block,
-                ),
+                Paragraph::new(model.get_number(i, j))
+                    .block(block)
+                    .style(style)
+                    .alignment(Alignment::Center),
                 layout[i][j],
             );
         }
