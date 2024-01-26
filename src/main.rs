@@ -1,12 +1,12 @@
-mod model;
-mod ui;
 mod event;
+mod model;
 mod tui;
+mod ui;
 
 use event::{Event, EventHandler};
 use model::{update, Model};
-use tui::Tui;
 use ratatui::prelude::{CrosstermBackend, Terminal};
+use tui::Tui;
 
 fn main() -> color_eyre::Result<()> {
     let mut model = Model::default();
@@ -32,4 +32,3 @@ fn main() -> color_eyre::Result<()> {
     tui.exit()?;
     Ok(())
 }
-
