@@ -3,6 +3,7 @@ mod model;
 mod tui;
 mod ui;
 mod loading;
+mod solver;
 
 use event::{Event, EventHandler};
 use model::{update_keyevent, update_tick, Model};

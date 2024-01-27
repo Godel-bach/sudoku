@@ -238,9 +238,11 @@ pub fn render(model: &Model, frame: &mut Frame) {
         style = style.bg(Color::White).fg(Color::Black);
     }
     let para = if let RunningState::Solving = model.get_state() {
-        model.get_icon().content()
+        format!("{} solving ...", model.get_icon().content())
+    } else if let RunningState::Done = model.get_state() {
+        format!("Solved in {:?}", model.get_time())
     } else {
-        ""
+        "".to_string()
     };
     frame.render_widget(
         Paragraph::new(para)

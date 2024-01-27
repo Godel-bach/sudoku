@@ -1,6 +1,8 @@
+use std::time::Duration;
+
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::loading::LoadingIcon;
+use crate::{loading::LoadingIcon, solver::SolverHandler};
 
 #[derive(Debug)]
 pub struct Model {
@@ -8,6 +10,8 @@ pub struct Model {
     state: RunningState,
     pos: Position,
     icon: LoadingIcon,
+    solver: Option<SolverHandler>,
+    time: Option<Duration>
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -33,7 +37,9 @@ impl Model {
             puzzel: puzzel,
             state: RunningState::Presolve,
             pos: Position::default(),
-            icon: LoadingIcon::default()
+            icon: LoadingIcon::default(),
+            solver: None,
+            time: None
         }
     }
 
@@ -53,16 +59,19 @@ impl Model {
         &self.state
     }
 
-    pub fn get_state_mut(&mut self) -> &mut RunningState {
-        &mut self.state
-    }
-
     pub fn get_icon(&self) -> &LoadingIcon {
         &self.icon
     }
 
-    pub fn get_icon_mut(&mut self) -> &mut LoadingIcon {
-        &mut self.icon
+    pub fn get_time(&self) -> &Duration {
+        if let Some(time) = &self.time {
+            return time;
+        }
+        unimplemented!()
+    }
+
+    pub fn get_puzzel(&self) -> [[Option<u8>; 9]; 9] {
+        self.puzzel
     }
 
     pub fn quit(&mut self) {
@@ -127,7 +136,8 @@ pub fn update_keyevent(model: &mut Model, key_event: KeyEvent) {
                 *model.get_position_mut() = Position::RightUp;
             } else if let Position::RightUp = model.get_position_mut() {
                 *model.get_position_mut() = Position::RightDown;
-                *model.get_state_mut() = RunningState::Solving;
+                model.state = RunningState::Solving;
+                model.solver = Some(SolverHandler::new(model.get_puzzel()));
             }
         }
         _ => {}
@@ -135,5 +145,12 @@ pub fn update_keyevent(model: &mut Model, key_event: KeyEvent) {
 }
 
 pub fn update_tick(model: &mut Model) {
-    model.get_icon_mut().on_tick();
+    model.icon.on_tick();
+    if let Some(handler) = &model.solver {
+        if let Ok((time, result)) = handler.try_get() {
+            model.time = Some(time);
+            model.puzzel = result;
+            model.state = RunningState::Done;
+        }
+    }
 }
