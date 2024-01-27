@@ -2,9 +2,10 @@ mod event;
 mod model;
 mod tui;
 mod ui;
+mod loading;
 
 use event::{Event, EventHandler};
-use model::{update, Model};
+use model::{update_keyevent, update_tick, Model};
 use ratatui::prelude::{CrosstermBackend, Terminal};
 use tui::Tui;
 
@@ -22,8 +23,8 @@ fn main() -> color_eyre::Result<()> {
         tui.draw(&mut model)?;
         // Handle events.
         match tui.events.next()? {
-            Event::Tick => {}
-            Event::Key(key_event) => update(&mut model, key_event),
+            Event::Tick => update_tick(&mut model),
+            Event::Key(key_event) => update_keyevent(&mut model, key_event),
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}
         };

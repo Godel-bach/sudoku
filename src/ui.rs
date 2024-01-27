@@ -6,16 +6,21 @@ use ratatui::{
     Frame,
 };
 
-use crate::model::{Model, Position};
+use crate::model::{Model, Position, RunningState};
 
 pub fn render(model: &Model, frame: &mut Frame) {
+    let overall_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(70), Constraint::Percentage(30)])
+        .split(frame.size());
+
     let mut constraits = vec![Constraint::Percentage(11); 8];
     constraits.push(Constraint::Percentage(12));
 
     let horizontal_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(constraits)
-        .split(frame.size());
+        .split(overall_layout[0]);
     let mut layout = Vec::default();
 
     for i in 0..9 {
@@ -29,6 +34,7 @@ pub fn render(model: &Model, frame: &mut Frame) {
         );
     }
 
+    // render sudoku part
     for i in 0..9 {
         for j in 0..9 {
             let block = match (i, j) {
@@ -212,4 +218,34 @@ pub fn render(model: &Model, frame: &mut Frame) {
             );
         }
     }
+
+    let right_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(70), Constraint::Percentage(30)])
+        .split(overall_layout[1]);
+    // render visual part
+    let mut style = Style::default();
+    if let Position::RightUp = model.get_position() {
+        style = style.bg(Color::White);
+    }
+    frame.render_widget(
+        Block::default().borders(Borders::ALL).style(style),
+        right_layout[0],
+    );
+
+    let mut style = Style::default();
+    if let Position::RightDown = model.get_position() {
+        style = style.bg(Color::White).fg(Color::Black);
+    }
+    let para = if let RunningState::Solving = model.get_state() {
+        model.get_icon().content()
+    } else {
+        ""
+    };
+    frame.render_widget(
+        Paragraph::new(para)
+            .block(Block::default().borders(Borders::ALL))
+            .style(style),
+        right_layout[1],
+    );
 }

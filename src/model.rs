@@ -1,14 +1,17 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+use crate::loading::LoadingIcon;
+
 #[derive(Debug)]
 pub struct Model {
     puzzel: [[Option<u8>; 9]; 9],
     state: RunningState,
     pos: Position,
+    icon: LoadingIcon,
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
-enum RunningState {
+pub enum RunningState {
     #[default]
     Presolve,
     Solving,
@@ -19,7 +22,8 @@ enum RunningState {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Position {
     Left(usize, usize),
-    Right,
+    RightUp,
+    RightDown,
 }
 
 impl Model {
@@ -29,6 +33,7 @@ impl Model {
             puzzel: puzzel,
             state: RunningState::Presolve,
             pos: Position::default(),
+            icon: LoadingIcon::default()
         }
     }
 
@@ -42,6 +47,22 @@ impl Model {
 
     pub fn get_position_mut(&mut self) -> &mut Position {
         &mut self.pos
+    }
+
+    pub fn get_state(&self) -> &RunningState {
+        &self.state
+    }
+
+    pub fn get_state_mut(&mut self) -> &mut RunningState {
+        &mut self.state
+    }
+
+    pub fn get_icon(&self) -> &LoadingIcon {
+        &self.icon
+    }
+
+    pub fn get_icon_mut(&mut self) -> &mut LoadingIcon {
+        &mut self.icon
     }
 
     pub fn quit(&mut self) {
@@ -62,7 +83,7 @@ impl Position {
     }
 }
 
-pub fn update(model: &mut Model, key_event: KeyEvent) {
+pub fn update_keyevent(model: &mut Model, key_event: KeyEvent) {
     match key_event.code {
         KeyCode::Esc | KeyCode::Char('q') => model.quit(),
         KeyCode::Char('c') | KeyCode::Char('C') => {
@@ -90,13 +111,29 @@ pub fn update(model: &mut Model, key_event: KeyEvent) {
         KeyCode::Left => {
             if let Position::Left(x, _) = model.get_position_mut() {
                 *x = (*x + 8) % 9;
+            } else {
+                *model.get_position_mut() = Position::default();
             }
         }
         KeyCode::Right => {
             if let Position::Left(x, _) = model.get_position_mut() {
                 *x = (*x + 1) % 9;
+            } else {
+                *model.get_position_mut() = Position::default();
+            }
+        }
+        KeyCode::Enter => {
+            if let Position::Left(_, _) = model.get_position_mut() {
+                *model.get_position_mut() = Position::RightUp;
+            } else if let Position::RightUp = model.get_position_mut() {
+                *model.get_position_mut() = Position::RightDown;
+                *model.get_state_mut() = RunningState::Solving;
             }
         }
         _ => {}
     };
+}
+
+pub fn update_tick(model: &mut Model) {
+    model.get_icon_mut().on_tick();
 }
