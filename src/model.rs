@@ -11,7 +11,7 @@ pub struct Model {
     pos: Position,
     icon: LoadingIcon,
     solver: Option<SolverHandler>,
-    time: Option<Duration>
+    time: Option<Duration>,
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -39,7 +39,7 @@ impl Model {
             pos: Position::default(),
             icon: LoadingIcon::default(),
             solver: None,
-            time: None
+            time: None,
         }
     }
 
@@ -105,6 +105,11 @@ pub fn update_keyevent(model: &mut Model, key_event: KeyEvent) {
                 if let Position::Left(x, y) = model.get_position() {
                     model.puzzel[*x][*y] = Some(c.to_digit(10).unwrap() as u8);
                 }
+            }
+        }
+        KeyCode::Backspace => {
+            if let Position::Left(x, y) = model.get_position() {
+                model.puzzel[*x][*y] = None;
             }
         }
         KeyCode::Up => {

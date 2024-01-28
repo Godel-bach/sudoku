@@ -2,12 +2,16 @@
 pub struct LoadingIcon {
     pos: usize,
     size: usize,
-    list: &'static [&'static str]
+    list: &'static [&'static str],
 }
 
 impl LoadingIcon {
     pub fn default() -> Self {
-        Self { pos: 0, size: 8, list: &["⣧", "⣏", "⡟", "⠿", "⢻", "⣹", "⣼", "⣶"] }
+        Self {
+            pos: 0,
+            size: 8,
+            list: &["⣧", "⣏", "⡟", "⠿", "⢻", "⣹", "⣼", "⣶"],
+        }
     }
 
     pub fn on_tick(&mut self) {

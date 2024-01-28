@@ -18,6 +18,8 @@ pub enum Event {
     Mouse(MouseEvent),
     /// Terminal resize.
     Resize(u16, u16),
+    FocusGained,
+    FocusLost,
 }
 
 /// Terminal event handler.
@@ -58,6 +60,8 @@ impl EventHandler {
                             }
                             CrosstermEvent::Mouse(e) => sender.send(Event::Mouse(e)),
                             CrosstermEvent::Resize(w, h) => sender.send(Event::Resize(w, h)),
+                            CrosstermEvent::FocusGained => sender.send(Event::FocusGained),
+                            CrosstermEvent::FocusLost => sender.send(Event::FocusLost),
                             _ => unimplemented!(),
                         }
                         .expect("failed to send terminal event")

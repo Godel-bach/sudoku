@@ -1,9 +1,9 @@
 mod event;
+mod loading;
 mod model;
+mod solver;
 mod tui;
 mod ui;
-mod loading;
-mod solver;
 
 use event::{Event, EventHandler};
 use model::{update_keyevent, update_tick, Model};
@@ -28,6 +28,8 @@ fn main() -> color_eyre::Result<()> {
             Event::Key(key_event) => update_keyevent(&mut model, key_event),
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}
+            Event::FocusGained => update_tick(&mut model),
+            Event::FocusLost => {}
         };
     }
 

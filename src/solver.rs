@@ -18,6 +18,19 @@ pub struct SolverHandler {
     handler: thread::JoinHandle<()>,
 }
 
+#[derive(Debug)]
+pub enum SolverError {
+    Infeasible,
+}
+
+impl std::fmt::Display for SolverError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl std::error::Error for SolverError {}
+
 impl SolverHandler {
     pub fn new(puzzel: [[Option<u8>; 9]; 9]) -> Self {
         let (sender, receiver) = mpsc::channel();
@@ -26,7 +39,6 @@ impl SolverHandler {
                 let now = Instant::now();
                 let result = solve(&puzzel).expect("meow?");
 
-                thread::sleep(Duration::new(5, 0));
                 sender.send((now.elapsed(), result)).expect("");
             })
         };
@@ -42,7 +54,7 @@ fn solve(puzzel: &[[Option<u8>; 9]; 9]) -> Result<[[Option<u8>; 9]; 9]> {
     let dir = tempdir()?;
     let file_path = dir.path().join("model.lp");
     let mut model_file = File::create(file_path.clone())?;
- 
+
     writeln!(model_file, "Maximize\n\t0")?;
 
     writeln!(model_file, "Subject To")?;
@@ -132,7 +144,10 @@ fn solve(puzzel: &[[Option<u8>; 9]; 9]) -> Result<[[Option<u8>; 9]; 9]> {
 
     writeln!(model_file, "END")?;
 
-    let output = Command::new(r"***REMOVED***").arg("-f").arg(file_path).output()?;
+    let output = Command::new(r"***REMOVED***")
+        .arg("-f")
+        .arg(file_path)
+        .output()?;
     if !output.status.success() {
         println!("Failed: {}", String::from_utf8(output.stderr)?);
     }
@@ -147,12 +162,31 @@ fn solve(puzzel: &[[Option<u8>; 9]; 9]) -> Result<[[Option<u8>; 9]; 9]> {
 fn parse_scip_output(output: String) -> Result<[[Option<u8>; 9]; 9]> {
     let re = Regex::new(r"([^=]+)============([^=]+)=============([^=]+)=================================([^x]*)(?<sol>[^=S]*)Statistics([\s\S]+)$").unwrap();
 
-    if let Some(cap) = re.captures(&output) {
-        println!("{}", &cap["sol"]);
+    let sol = if let Some(cap) = re.captures(&output) {
+        Ok(cap.name("sol").unwrap().as_str())
     } else {
-        println!("Try more");
+        Err(SolverError::Infeasible)
+    }?;
+    let elements: Vec<&str> = sol.trim().split_whitespace().collect();
+    let pos: Vec<_> = elements
+        .chunks(3)
+        .map(|c| {
+            (
+                c[0].chars().nth(1),
+                c[0].chars().nth(2),
+                c[0].chars().nth(3),
+            )
+        })
+        .collect();
+
+    let mut solution = [[None; 9]; 9];
+    for (i, j, k) in pos.iter() {
+        let i: usize = i.unwrap().to_digit(10).unwrap() as usize;
+        let j: usize = j.unwrap().to_digit(10).unwrap() as usize;
+        let k: u8 = k.unwrap().to_digit(10).unwrap() as u8;
+        solution[i][j] = Some(k);
     }
-    todo!()
+    return Ok(solution);
 }
 
 #[cfg(test)]
@@ -532,7 +566,8 @@ Integrals          :      Total       Avg%
   primal-ref       :       0.00       0.00
   dual-ref         :       0.00       0.00"#;
 
-        let _ = parse_scip_output(output.to_string());
+        let sol = parse_scip_output(output.to_string());
+        println!("{:?}", sol);
     }
 
     #[test]
@@ -569,6 +604,6 @@ Integrals          :      Total       Avg%
         for (i, j, k) in puzzel.into_iter() {
             sukoku[i][j] = Some(k);
         }
-        solve(&sukoku);
+        solve(&sukoku).unwrap();
     }
 }
