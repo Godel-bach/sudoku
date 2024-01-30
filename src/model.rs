@@ -19,8 +19,14 @@ pub enum RunningState {
     #[default]
     Presolve,
     Solving,
-    Done,
+    Done(SolveState),
     Leaving,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum SolveState {
+    Solved,
+    Infeasible,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -152,10 +158,14 @@ pub fn update_keyevent(model: &mut Model, key_event: KeyEvent) {
 pub fn update_tick(model: &mut Model) {
     model.icon.on_tick();
     if let Some(handler) = &model.solver {
-        if let Ok((time, result)) = handler.try_get() {
-            model.time = Some(time);
-            model.puzzel = result;
-            model.state = RunningState::Done;
+        if let Ok(result) = handler.try_get() {
+            if let Ok((time, result)) = result {
+                model.time = Some(time);
+                model.puzzel = result;
+                model.state = RunningState::Done(SolveState::Solved);
+            } else {
+                model.state = RunningState::Done(SolveState::Infeasible);
+            }
         }
     }
 }

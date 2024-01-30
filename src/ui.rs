@@ -6,7 +6,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::model::{Model, Position, RunningState};
+use crate::model::{Model, Position, RunningState, SolveState};
 
 pub fn render(model: &Model, frame: &mut Frame) {
     let overall_layout = Layout::default()
@@ -209,11 +209,21 @@ pub fn render(model: &Model, frame: &mut Frame) {
                         .add_modifier(Modifier::BOLD)
                 }
             }
-            if let RunningState::Done = model.get_state() {
-                style = Style::new()
+            if let RunningState::Done(state) = model.get_state() {
+                match state {
+                    SolveState::Solved => {
+                        style = Style::new()
                     .fg(Color::Gray)
                     .bg(Color::LightYellow)
                     .add_modifier(Modifier::ITALIC);
+                    },
+                    SolveState::Infeasible => {
+                        style = Style::new()
+                    .fg(Color::Gray)
+                    .bg(Color::Red)
+                    .add_modifier(Modifier::DIM);
+                    },
+                }
             }
             frame.render_widget(
                 Paragraph::new(model.get_number(i, j))
@@ -245,8 +255,11 @@ pub fn render(model: &Model, frame: &mut Frame) {
     }
     let para = if let RunningState::Solving = model.get_state() {
         format!("{} solving ...", model.get_icon().content())
-    } else if let RunningState::Done = model.get_state() {
-        format!("Solved in {:?}", model.get_time())
+    } else if let RunningState::Done(state) = model.get_state() {
+        match state {
+            SolveState::Solved => format!("Solved in {:?}", model.get_time()),
+            SolveState::Infeasible => format!("Infeasible!"),
+        }
     } else {
         "".to_string()
     };
