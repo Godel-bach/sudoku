@@ -209,6 +209,12 @@ pub fn render(model: &Model, frame: &mut Frame) {
                         .add_modifier(Modifier::BOLD)
                 }
             }
+            if let RunningState::Done = model.get_state() {
+                style = Style::new()
+                    .fg(Color::Gray)
+                    .bg(Color::LightYellow)
+                    .add_modifier(Modifier::ITALIC);
+            }
             frame.render_widget(
                 Paragraph::new(model.get_number(i, j))
                     .block(block)
@@ -229,7 +235,7 @@ pub fn render(model: &Model, frame: &mut Frame) {
         style = style.bg(Color::White);
     }
     frame.render_widget(
-        Block::default().borders(Borders::ALL).style(style),
+        Paragraph::new("Press q to quit\nPress Enter to start solving\n").block(Block::default().borders(Borders::ALL).style(style)),
         right_layout[0],
     );
 
