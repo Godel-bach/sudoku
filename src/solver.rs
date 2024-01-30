@@ -1,10 +1,5 @@
 use std::{
-    fs::File,
-    io::Write,
-    process::Command,
-    sync::mpsc,
-    thread,
-    time::{Duration, Instant},
+    env, fs::File, io::Write, process::Command, sync::mpsc, thread, time::{Duration, Instant}
 };
 
 use color_eyre::Result;
@@ -136,7 +131,8 @@ fn solve(puzzel: &[[Option<u8>; 9]; 9]) -> Result<Result<[[Option<u8>; 9]; 9], S
 
     writeln!(model_file, "END")?;
 
-    let output = Command::new(r"***REMOVED***")
+    let scip_path = env::var("SCIP_PATH")?;
+    let output = Command::new(scip_path)
         .arg("-f")
         .arg(file_path)
         .output()?;
@@ -610,5 +606,11 @@ Integrals          :      Total       Avg%
             sukoku[i][j] = Some(k);
         }
         let _ = solve(&sukoku).unwrap();
+    }
+
+    #[test]
+    fn test_env() {
+        let scip_path = env::var("SCIP_PATH");
+        println!("{:?}", scip_path);
     }
 }
